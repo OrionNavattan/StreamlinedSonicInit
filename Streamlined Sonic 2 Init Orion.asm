@@ -67,7 +67,7 @@ EntryPoint:
 		btst	d4,(a3)					; has the Z80 stopped?
 		bne.s	.waitz80				; if not, branch
 
-		move.w #sizeof_z80_ram-1,d5 ; size of Z80 ram
+		move.w #sizeof_z80_ram-1,d5			; size of Z80 ram
    .clear_Z80_ram:
 		move.b 	d4,(a1)+				; clear the Z80 RAM
 		dbf	d5,.clear_Z80_ram
@@ -84,7 +84,7 @@ EntryPoint:
 		; All absolute longs here have been optimized to PC relative, since this code will
 		; invariably be located near the header.
    		move.l	d4,d7					; clear d7
-		lea	EndOfHeader(pc),a1				; start checking bytes after the header	($200)
+		lea	EndOfHeader(pc),a1			; start checking bytes after the header	($200)
 		move.l	ROMEndLoc(pc),d0			; stop at end of ROM
 
    .checksum_loop:
@@ -103,7 +103,7 @@ EntryPoint:
 		move.b	 d6,(v_console_region).w		; set in RAM
 		
 	.set_vdp_buffer:
-		move.w	d4,d5						; clear d5
+		move.w	d4,d5					; clear d5
 		move.b	SetupVDP(pc),d5				; get first entry of SetupVDP
 		ori.w	#vdp_mode_register2,d5			; make it a valid command word ($8134)
 		move.w	d5,(v_vdp_mode_buffer).w		; save to buffer for later use
@@ -112,37 +112,37 @@ EntryPoint:
 	;.load_sound_driver:
 		; WARNING: if using Flamewing's Saxman decompressor, change d7, a5, and a6 in this
 		; block to d6, a0, and a1 respectively, and delete 'movea.l a5,a4'.
-		pushr.w	d1/d2/d4	; back up these registers for compatibility with other decompressors
+		pushr.w	d1/d2/d4				; back up these registers for compatibility with other decompressors
 ;		pushr.l	a3			; back a3 up too if using a different compression format
-		lea (SoundDriver).l,a6					; sound driver start address
+		lea (SoundDriver).l,a6				; sound driver start address
 		
 		; WARNING: you must edit MergeCode if you rename this label	
 	movewZ80CompSize:		
-		move.w	#$F64,d7		; default size of compressed driver	(patched later by S2 Sound Driver Compress if necessary)			
-		move.l	d4,d3			; clear d3/d5/d6
+		move.w	#$F64,d7				; default size of compressed driver	(patched later by S2 Sound Driver Compress if necessary)			
+		move.l	d4,d3					; clear d3/d5/d6
 		move.l	d4,d5			
 		move.l	d4,d6					
 		lea	(z80_ram).l,a5
 		movea.l a5,a4
 		
-		jsr	(SaxDec_Loop).l		; decompress the sound driver (uses d0,d3-d7,a4-a6; d1,d2,a0-a3 are not touched)
+		jsr	(SaxDec_Loop).l				; decompress the sound driver (uses d0,d3-d7,a4-a6; d1,d2,a0-a3 are not touched)
 		
 ;		popr.l	a3		; restore a3 if using a different compression format
-		popr.w d1/d2/d4		; restore registers
+		popr.w d1/d2/d4					; restore registers
 		
 		btst	#console_speed_bit,(v_console_region).w	; are we on a PAL console?
-		sne	zPalModeByte(a4)				; if so, set the driver's PAL flag
+		sne	zPalModeByte(a4)			; if so, set the driver's PAL flag
 
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
 		
-		move.b	d2,port_1_control-z80_bus_request(a3) ; initialise port 1
-		move.b	d2,port_2_control-z80_bus_request(a3) ; initialise port 2
-		move.b	d2,port_e_control-z80_bus_request(a3) ; initialise port e
+		move.b	d2,port_1_control-z80_bus_request(a3)	; initialise port 1
+		move.b	d2,port_2_control-z80_bus_request(a3)	; initialise port 2
+		move.b	d2,port_e_control-z80_bus_request(a3)	; initialise port e
 
 		move.w	d1,z80_reset-z80_bus_request(a3)	; release Z80 reset
 		move.w	d4,(a3)					; start the Z80
 
-		move.b	#id_Sega,(v_gamemode).w		; set initial game mode (Sega screen)
+		move.b	#id_Sega,(v_gamemode).w			; set initial game mode (Sega screen)
 		bra.s	MainGameLoop				; continue to main program
 		
 		
@@ -189,7 +189,7 @@ SetupValues:
 		dc.w	(($FFFFFFFF-v_keep_after_reset+1)/4)-1
 		dc.w	((v_keep_after_reset&$FFFF)/4)-1
 		dc.w	vdp_auto_inc+2				; VDP increment
-		vdp_comm.l	dc,$0000,vsram,write			; VSRAM write mode
-		vdp_comm.l	dc,$0000,cram,write				; CRAM write mode
+		vdp_comm.l	dc,$0000,vsram,write		; VSRAM write mode
+		vdp_comm.l	dc,$0000,cram,write		; CRAM write mode
    
 		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4) 

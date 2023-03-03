@@ -74,7 +74,7 @@ EntryPoint:
 		btst	d4,(a3)					; has the Z80 stopped?
 		bne.s	.waitz80				; if not, branch
 
-		move.w	#$2000-1,d5 ; size of remaining Z80 ram
+		move.w	#$2000-1,d5				; size of remaining Z80 ram
    .clear_Z80_ram:
 		move.b	d4,(a1)+				; clear the the Z80 RAM
 		dbf	d5,.clear_Z80_ram
@@ -91,15 +91,15 @@ EntryPoint:
    		; All absolute longs here have been optimized to PC relative, since this code will
 		; invariably be located near the header.
       	move.l	d4,d7						; clear d7		
-		lea	EndOfHeader(pc),a1	; start	checking bytes after the header	($200)
-		move.l	RomEndLoc(pc),d0				; stop at end of ROM
+		lea	EndOfHeader(pc),a1			; start	checking bytes after the header	($200)
+		move.l	RomEndLoc(pc),d0			; stop at end of ROM
 
    .checksum_loop:
 		add.w	(a1)+,d7				; add each word of the rom to d4
 		cmp.l	a1,d0					; have we reached the end?
 		bcc.s	.checksum_loop				; if not, branch
 
-		cmp.w	Checksum(pc),d7	; read checksum
+		cmp.w	Checksum(pc),d7				; read checksum
 		
 		beq.s	.set_region				; if they match, branch
 		move.w	#cRed,(a5)				; set BG color to red
@@ -110,7 +110,7 @@ EntryPoint:
 		move.b	d6,(v_megadrive).w			; set in RAM
 		
 	.set_vdp_buffer:
-		move.w	d4,d5						; clear d5	
+		move.w	d4,d5					; clear d5	
 		move.b	SetupVDP(pc),d4				; get first entry of SetupVDP
 		ori.w	#$8100,d4				; make it a valid command word ($8134)
 		move.w	d4,(v_vdp_buffer1).w			; save to buffer for later use
@@ -120,13 +120,13 @@ EntryPoint:
 		movem.w	d1/d2/d4,-(sp)
 		move.l	a3,-(sp)
 		
-		lea	(Kos_Z80).l,a0			; compressed DAC driver address
+		lea	(Kos_Z80).l,a0				; compressed DAC driver address
 		lea	(z80_ram).l,a1				; load into start of z80 RAM
 	
 		bsr.w	KosDec					; decompress the DAC driver
 		
 		move.l	(sp)+,a3
-		movem.w	(sp)+,d1/d2/d4		; restore registers
+		movem.w	(sp)+,d1/d2/d4				; restore registers
 		
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
 

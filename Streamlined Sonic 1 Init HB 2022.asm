@@ -74,7 +74,7 @@ EntryPoint:
 		btst	d4,(a3)					; has the Z80 stopped?
 		bne.s	.waitz80				; if not, branch
 
-		move.w #sizeof_z80_ram-1,d5 ; size of Z80 ram
+		move.w #sizeof_z80_ram-1,d5			; size of Z80 ram
    .clear_Z80_ram:
 		move.b 	d4,(a1)+				; clear the Z80 RAM
 		dbf	d5,.clear_Z80_ram
@@ -91,7 +91,7 @@ EntryPoint:
 		; All absolute longs here have been optimized to PC relative, since this code will
 		; invariably be located near the header.
    		move.l	d4,d7					; clear d7
-		lea	EndOfHeader(pc),a1				; start checking bytes after the header	($200)
+		lea	EndOfHeader(pc),a1			; start checking bytes after the header	($200)
 		move.l	ROM_End_Ptr(pc),d0			; stop at end of ROM
 
    .checksum_loop:
@@ -99,7 +99,7 @@ EntryPoint:
 		cmp.l	a1,d0					; have we reached the end?
 		bcc.s	.checksum_loop				; if not, branch
 
-		cmp.w	Checksum(pc),d7	; read checksum
+		cmp.w	Checksum(pc),d7				; read checksum
 		
 		beq.s	.set_region				; if they match, branch
 		move.w	#cRed,(a5)				; if they don't match, set BG color to red
@@ -110,14 +110,14 @@ EntryPoint:
 		move.b	 d6,(v_console_region).w		; set in RAM
 		
 	.set_vdp_buffer:
-		move.w	d4,d5						; clear d5
+		move.w	d4,d5					; clear d5
 		move.b	SetupVDP(pc),d5				; get first entry of SetupVDP
 		ori.w	#vdp_mode_register2,d5			; make it a valid command word ($8134)
 		move.w	d5,(v_vdp_mode_buffer).w		; save to buffer for later use
 		move.w	#vdp_hint_counter+(screen_height-1),(v_vdp_hint_counter).w ; horizontal interrupt every 224th scanline
 
 	;.load_dac_driver:		
-		pushr.w d1/d2/d4		; back up these registers to ensure compatibility with other decompressors
+		pushr.w d1/d2/d4				; back up these registers to ensure compatibility with other decompressors
 		pushr.l	a3
 		
 		lea	(DACDriver).l,a0			; compressed DAC driver address
@@ -126,13 +126,13 @@ EntryPoint:
 		bsr.w	KosDec					; decompress the DAC driver
 		
 		popr.l	a3
-		popr.w	d1/d2/d4		; restore registers
+		popr.w	d1/d2/d4				; restore registers
 		
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
 		
-		move.b	d2,port_1_control-z80_bus_request(a3) ; initialise port 1
-		move.b	d2,port_2_control-z80_bus_request(a3) ; initialise port 2
-		move.b	d2,port_e_control-z80_bus_request(a3) ; initialise port e
+		move.b	d2,port_1_control-z80_bus_request(a3)	; initialise port 1
+		move.b	d2,port_2_control-z80_bus_request(a3)	; initialise port 2
+		move.b	d2,port_e_control-z80_bus_request(a3)	; initialise port e
 		
 		move.w	d1,z80_reset-z80_bus_request(a3)	; release Z80 reset
 		move.w	d4,(a3)					; start the Z80
