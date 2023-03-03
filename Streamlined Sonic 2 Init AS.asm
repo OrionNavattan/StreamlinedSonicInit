@@ -1,3 +1,11 @@
+;-------------------------------------------------------------------------
+; Streamlined Startup for Sonic the Hedgehog 1
+; Targets Sonic 2 SonicRetro AS, but can be adapted to
+; other disassemblies and other games.
+; Includes code from MarkeyJester's init library:
+; https://pastebin.com/KXpmQxQp
+;-------------------------------------------------------------------------
+
 EntryPoint:
 	lea SetupValues(pc),a0					; load setup array
 	move.w	(a0)+,sr					; disable interrupts during setup; they will be reenabled by the Sega Screen

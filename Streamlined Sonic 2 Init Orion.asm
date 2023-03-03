@@ -1,3 +1,11 @@
+;-------------------------------------------------------------------------
+; Streamlined Startup for Sonic the Hedgehog 1
+; Targets OrionNavattan's Sonic 2, but can be adapted to
+; other disassemblies and other games.
+; Includes code from MarkeyJester's init library:
+; https://pastebin.com/KXpmQxQp
+;-------------------------------------------------------------------------
+
 EntryPoint:
 		lea SetupValues(pc),a0				; load setup array
 		move.w	(a0)+,sr				; disable interrupts during setup; they will be reenabled by the Sega Screen
