@@ -1,10 +1,11 @@
-# StreamlinedSonicInit
+# Streamlined Sonic Init
  Streamlined init code for Sonic the Hedgehog 1 and 2. Versions targeting SonicRetro's disassemblies, S1 Hivebrain 2022, and my own S2 disasm (Sonic 2 OrnNv).
  
  These are intended as drop-in replacements for the standard ICDBLK_4 library and the game-specific init code that immediately follows.
 Compared to the original, these are streamlined, eliminating all redundancy (particularly on cold boot) and in-lining the VDP and joypad init,
 Z80 code load, and the checksum check (which is easy to remove).
 
+## Installation Instructions:
 Sonic 1 AS: 
 - Replace everything from EntryPoint to MainGameLoop with the contents of Streamlined Sonic 1 Init AS.asm. 
 - Find GM_Title and delete the 'bsr.w SoundDriverLoad' six lines into that routine.
