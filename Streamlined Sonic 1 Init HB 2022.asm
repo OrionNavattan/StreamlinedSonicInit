@@ -6,7 +6,7 @@
 ; https://pastebin.com/KXpmQxQp
 ;-------------------------------------------------------------------------
 EntryPoint:
-		lea SetupValues(pc),a0				; load setup array
+		lea	SetupValues(pc),a0			; load setup array
 		move.w	(a0)+,sr				; disable interrupts during setup; they will be reenabled by the Sega Screen
 		movem.l (a0)+,a1-a3/a5/a6			; Z80 RAM start, work RAM start, Z80 bus request register, VDP data port, VDP control port
 		movem.w (a0)+,d1/d2				; VDP register increment/value for Z80 stop and reset release ($100),  first VDP register value ($8004)
