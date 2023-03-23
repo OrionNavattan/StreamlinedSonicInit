@@ -126,20 +126,20 @@ EntryPoint:
 		
 		; WARNING: you must edit MergeCode if you rename this label	
 	movewZ80CompSize:		
-		move.w	#$F64,d7				; default size of compressed driver	(patched later by S2 Sound Driver Compress if necessary)			
-		move.l	d4,d3					; clear d3/d5/d6
-		move.l	d4,d5			
-		move.l	d4,d6					
-		lea	(z80_ram).l,a5
-		movea.l a5,a4
+		move.w	#$F64,d7				; size of compressed data; patched if necessary by SndDriverCompress.exe		
+		move.l	d4,d3						; d3 & d4 = buffers for unprocessed data
+		move.l	d4,d5						; d5 = offset of end of decompressed data
+		move.l	d4,d6						; make the decompressor fetch the first descriptor byte 							
+		lea	(z80_ram).l,a5				; start of compressed data
+		movea.l a5,a4					; start of compressed data (used for dictionary matches)
 		
-		jsr	(SaxDec_Loop).l				; decompress the sound driver (uses d0,d3-d7,a4-a6; d1,d2,a0-a3 are not touched)
+		jsr	(SaxDec).l				; decompress the sound driver (uses d0,d3-d7,a4-a6; d1,d2,a0-a3 are not touched)
 		
 ;		popr.l	a3		; restore a3 if using a different compression format
 		popr.w d1/d2/d4					; restore registers
 		
 		btst	#console_speed_bit,(v_console_region).w	; are we on a PAL console?
-		sne	zPalModeByte(a4)			; if so, set the driver's PAL flag
+		sne	f_pal(a4)			; if so, set the driver's PAL flag
 
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
 		
