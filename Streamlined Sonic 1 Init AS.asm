@@ -6,7 +6,7 @@
 ; https://pastebin.com/KXpmQxQp
 ;-------------------------------------------------------------------------
 EntryPoint:
-		lea SetupValues(pc),a0				; load setup array
+		lea	SetupValues(pc),a0			; load setup array
 		move.w	(a0)+,sr				; disable interrupts during setup; they will be reenabled by the Sega Screen
 		movem.l (a0)+,a1-a3/a5/a6			; Z80 RAM start, work RAM start, Z80 bus request register, VDP data port, VDP control port
 		movem.w (a0)+,d1/d2				; first VDP register value ($8004), VDP register increment/value for Z80 stop and reset release ($100)
@@ -90,7 +90,7 @@ EntryPoint:
    		; Checksum check; delete everything from here to .set_region to remove
    		; All absolute longs here have been optimized to PC relative, since this code will
 		; invariably be located near the header.
-      	move.l	d4,d7						; clear d7		
+		move.l	d4,d7					; clear d7		
 		lea	EndOfHeader(pc),a1			; start	checking bytes after the header	($200)
 		move.l	RomEndLoc(pc),d0			; stop at end of ROM
 
@@ -151,7 +151,7 @@ SetupValues:
 		dc.w	$100					; VDP Reg increment value & opposite initialisation flag for Z80
 		dc.w	$8004					; $8004; normal color mode, horizontal interrupts disabled
    SetupVDP:
-		dc.b	$8134&$FF				;  $8134; mode 5, NTSC, vertical interrupts and DMA enabled 
+		dc.b	$8134&$FF				; $8134; mode 5, NTSC, vertical interrupts and DMA enabled 
 		dc.b	($8200+(vram_fg>>10))&$FF		; $8230; foreground nametable starts at $C000
 		dc.b	($8300+($A000>>10))&$FF			; $8328; window nametable starts at $A000
 		dc.b	($8400+(vram_bg>>13))&$FF		; $8407; background nametable starts at $E000
@@ -161,14 +161,14 @@ SetupValues:
 		dc.b	$8800&$FF				; $8800; unused (mode 4 hscroll register)
 		dc.b	$8900&$FF				; $8900; unused (mode 4 vscroll register)
 		dc.b	($8A00+0)&$FF				; $8A00; horizontal interrupt register (set to 0 for now)
-		dc.b	$8B00&$FF				; $8B00 ; full-screen vertical/horizontal scrolling
-		dc.b	$8C81&$FF				; $8C81 ; H40 display mode
+		dc.b	$8B00&$FF				; $8B00; full-screen vertical/horizontal scrolling
+		dc.b	$8C81&$FF				; $8C81; H40 display mode
 		dc.b	($8D00+(vram_hscroll>>10))&$FF		; $8D3F; hscroll table starts at $FC00
 		dc.b	$8E00&$FF				; $8E00: unused (high bits of fg and bg nametable addresses for 128KB VRAM)
 		dc.b	($8F00+1)&$FF				; $8F01; VDP increment size (will be changed to 2 later)
-		dc.b	$9001&$FF				; $9100; unused (window horizontal position)
-		dc.b	$9100&$FF				; $9200; unused (window vertical position)
-		dc.b	$9200&$FF				; window vertical position
+		dc.b	$9001&$FF				; $9001; 64x32 plane size
+		dc.b	$9100&$FF				; $9100; unused (window horizontal position)
+		dc.b	$9200&$FF				; $9200; unused (window vertical position)
 
 		dc.w	$FFFF					; $93FF/$94FF - DMA length
 		dc.w	0					; VDP $9500/9600 - DMA source

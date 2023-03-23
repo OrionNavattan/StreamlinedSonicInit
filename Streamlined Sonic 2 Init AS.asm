@@ -7,7 +7,7 @@
 ;-------------------------------------------------------------------------
 
 EntryPoint:
-	lea SetupValues(pc),a0					; load setup array
+	lea	SetupValues(pc),a0				; load setup array
 	move.w	(a0)+,sr					; disable interrupts during setup; they will be reenabled by the Sega Screen
 	movem.l (a0)+,a1-a3/a5/a6				; Z80 RAM start, work RAM start, Z80 bus request register, VDP data port, VDP control port
 	movem.w (a0)+,d1/d2					; first VDP register value ($8004), VDP register increment/value for Z80 stop and reset release ($100)
@@ -121,7 +121,7 @@ EntryPoint:
 	; WARNING: if using Flamewing's Saxman decompressor, change d7, a5, and a6 in this
 	; block to d6, a0, and a1 respectively, and delete 'movea.l a5,a4'.
 	movem.w	d1/d2/d4,-(sp)					; back up these registers for compatibility with other decompressors
-;	move.l	a3,-(sp)		; back a3 up too if using a different compression format
+;	move.l	a3,-(sp)					; back a3 up too if using a different compression format
 	lea (Snd_Driver).l,a6					; sound driver start address
 
 	; WARNING: you must edit the source of FixPointer if you rename this label	
@@ -175,14 +175,14 @@ SetupVDP:
 	dc.b	$8800&$FF					; $8800; unused (mode 4 hscroll register)
 	dc.b	$8900&$FF					; $8900; unused (mode 4 vscroll register)
 	dc.b	($8A00+0)&$FF					; $8A00; horizontal interrupt register (set to 0 for now)
-	dc.b	$8B00&$FF					; $8B00 ; full-screen vertical/horizontal scrolling
-	dc.b	$8C81&$FF					; $8C81 ; H40 display mode
+	dc.b	$8B00&$FF					; $8B00; full-screen vertical/horizontal scrolling
+	dc.b	$8C81&$FF					; $8C81; H40 display mode
 	dc.b	($8D00+(VRAM_Horiz_Scroll_Table>>10))&$FF	; $8D3F; hscroll table starts at $FC00
 	dc.b	$8E00&$FF					; $8E00: unused (high bits of fg and bg nametable addresses for 128KB VRAM)
 	dc.b	($8F00+1)&$FF					; $8F01; VDP increment size (will be changed to 2 later)
-	dc.b	$9001&$FF					; $9100; unused (window horizontal position)
-	dc.b	$9100&$FF					; $9200; unused (window vertical position)
-	dc.b	$9200&$FF					; window vertical position
+	dc.b	$9001&$FF					; $9001; 64x32 plane size
+	dc.b	$9100&$FF					; $9100; unused (window horizontal position)
+	dc.b	$9200&$FF					; $9200; unused (window vertical position)
 
 	dc.w	$FFFF						; $93FF/$94FF - DMA length
 	dc.w	0						; VDP $9500/9600 - DMA source
