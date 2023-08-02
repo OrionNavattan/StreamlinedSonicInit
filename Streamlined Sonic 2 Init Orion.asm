@@ -82,7 +82,7 @@ EntryPoint:
 		
 		moveq	#4-1,d5					; set number of PSG channels to mute
    .psg_loop:
-		move.b	(a0)+,psg_input-vdp_data_port(a6)	; set the PSG channel volume to null (no sound)
+		move.b	(a0)+,psg_input-vdp_data_port(a5)	; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop				; repeat for all channels
 
 		tst.w	port_e_control_hi-z80_bus_request(a3)	; was this a soft reset?

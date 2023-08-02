@@ -74,14 +74,14 @@ EntryPoint:
 		btst	d4,(a3)					; has the Z80 stopped?
 		bne.s	.waitz80				; if not, branch
 
-		move.w	#$2000-1,d5				; size of remaining Z80 ram
+		move.w	#$2000-1,d5				; size of Z80 ram
    .clear_Z80_ram:
-		move.b	d4,(a1)+				; clear the the Z80 RAM
+		move.b	d4,(a1)+				; clear the Z80 RAM
 		dbf	d5,.clear_Z80_ram
 
 		moveq	#4-1,d5					; set number of PSG channels to mute
    .psg_loop:
-		move.b	(a0)+,psg_input-vdp_data_port(a6)	; set the PSG channel volume to null (no sound)
+		move.b	(a0)+,psg_input-vdp_data_port(a5)	; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop				; repeat for all channels
 
 		tst.w	z80_expansion_control-z80_bus_request(a3) ; was this a soft reset?
