@@ -11,7 +11,7 @@ EntryPoint:
 		move.w	(a0)+,sr				; disable interrupts during setup; they will be reenabled by the Sega Screen
 		movem.l (a0)+,a1-a3/a5/a6			; Z80 RAM start, work RAM start, Z80 bus request register, VDP data port, VDP control port
 		movem.w (a0)+,d1/d2				; VDP register increment/value for Z80 stop and reset release ($100),  first VDP register value ($8004)
-		moveq	#SetupVDP_end-SetupVDP-1,d5		; VDP registers loop counter
+		moveq	#sizeof_SetupVDP-1,d5		; VDP registers loop counter
 		moveq	#0,d4					; DMA fill/memory clear/Z80 stop bit test value
 		movea.l d4,a4					; clear a4
 		move.l	a4,usp					; clear user stack pointer
@@ -157,7 +157,7 @@ EntryPoint:
 SetupValues:
 		dc.w	$2700					; disable interrupts
 		dc.l	z80_ram
-		dc.l	$FFFF0000				; ram_start
+		dc.l	ram_start				; ram_start
 		dc.l	z80_bus_request
 		dc.l	vdp_data_port
 		dc.l	vdp_control_port
@@ -184,15 +184,17 @@ SetupValues:
 		dc.b	vdp_window_x_pos&$FF			; $9100; unused (window horizontal position)
 		dc.b	vdp_window_y_pos&$FF			; $9200; unused (window vertical position)
 
-		dc.w	sizeof_vram-1				; $93FF/$94FF - DMA length
-		dc.w	0					; VDP $9500/9600 - DMA source
+		dc.b	(vdp_dma_length_low+((sizeof_vram-1)&$FF))&$FF	; $93FF/$94FF - DMA length
+		dc.b	(vdp_dma_length_hi+((sizeof_vram-1)>>8))&$FF
+		dc.b	(vdp_dma_source_low+0)&$FF		; $9500/9600 - DMA source
+		dc.b	(vdp_dma_source_mid+0)&$FF		
 		dc.b	vdp_dma_vram_fill&$FF			; VDP $9780 - DMA fill VRAM
 
 		dc.b	$40					; I/O port initialization value
    
-	SetupVDP_end:
+		arraysize SetupVDP
 
-		dc.l	$40000080				; DMA fill VRAM
+		vdp_comm.l	dc,vram_start,vram,dma	; DMA fill VRAM
 		dc.l	v_keep_after_reset
 		dc.w	(($FFFFFFFF-v_keep_after_reset+1)/4)-1
 		dc.w	((v_keep_after_reset&$FFFF)/4)-1

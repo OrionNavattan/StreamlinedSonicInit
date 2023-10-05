@@ -169,9 +169,11 @@ SetupValues:
 		dc.b	(vdp_plane_width_64|vdp_plane_height_32)&$FF ; $9001; 64x32 plane size
 		dc.b	vdp_window_x_pos&$FF			; $9100; unused (window horizontal position)
 		dc.b	vdp_window_y_pos&$FF			; $9200; unused (window vertical position)
-
-		dc.w	sizeof_vram-1				; $93FF/$94FF - DMA length
-		dc.w	0					; VDP $9500/9600 - DMA source
+		
+		dc.b	(vdp_dma_length_low+((sizeof_vram-1)&$FF))&$FF	; $93FF/$94FF - DMA length
+		dc.b	(vdp_dma_length_hi+((sizeof_vram-1)>>8))&$FF
+		dc.b	(vdp_dma_source_low+0)&$FF		; $9500/9600 - DMA source
+		dc.b	(vdp_dma_source_mid+0)&$FF		
 		dc.b	vdp_dma_vram_fill&$FF			; VDP $9780 - DMA fill VRAM
 
 		dc.b	$40					; I/O port initialization value
