@@ -23,23 +23,23 @@ EntryPoint:
 		andi.b	#$F,d3					; get only hardware version ID
 		beq.s	.wait_dma				; if Model 1 VA4 or earlier (ID = 0), branch
 		move.l	#'SEGA',security_addr-z80_bus_request(a3) ; satisfy the TMSS
-   
+
    .wait_dma:
 		move.w	(a6),ccr				; copy status register to CCR, clearing the VDP write latch and setting the overflow flag if a DMA is in progress
 		bvs.s	.wait_dma				; if a DMA was in progress during a soft reset, wait until it is finished
-   
+
    .loop_vdp:
 		move.w	d2,(a6)					; set VDP register
 		add.w	d1,d2					; advance register ID
 		move.b	(a0)+,d2				; load next register value
 		dbf	d5,.loop_vdp				; repeat for all registers ; final value loaded will be used later to initialize I/0 ports
-   
+
 		move.l	(a0)+,(a6)				; set DMA fill destination
 		move.w	d4,(a5)					; set DMA fill value (0000), clearing the VRAM
-			
+
 		tst.w	z80_expansion_control-z80_bus_request(a3) ; was this a soft reset?
 		bne.s	.clear_every_reset			; if so, skip clearing RAM addresses $FE00-$FFFF
-   
+
 		movea.l	(a0),a4					; $FFFFFE00	  (increment will happen later)
 		move.w	4(a0),d5				; repeat times
    .loop_ram1:
@@ -90,7 +90,7 @@ EntryPoint:
    		; Checksum check; delete everything from here to .set_region to remove
    		; All absolute longs here have been optimized to PC relative, since this code will
 		; invariably be located near the header.
-		move.l	d4,d7					; clear d7		
+		move.l	d4,d7					; clear d7
 		lea	EndOfHeader(pc),a1			; start	checking bytes after the header	($200)
 		move.l	RomEndLoc(pc),d0			; stop at end of ROM
 
@@ -100,7 +100,7 @@ EntryPoint:
 		bcc.s	.checksum_loop				; if not, branch
 
 		cmp.w	Checksum(pc),d7				; read checksum
-		
+
 		beq.s	.set_region				; if they match, branch
 		move.w	#cRed,(a5)				; set BG color to red
 		bra.s	*					; stay here forever
@@ -108,26 +108,26 @@ EntryPoint:
 	.set_region:
 		andi.b	#$C0,d6					; get region and speed settings
 		move.b	d6,(v_megadrive).w			; set in RAM
-		
+
 	.set_vdp_buffer:
-		move.w	d4,d5					; clear d5	
+		move.w	d4,d5					; clear d5
 		move.b	SetupVDP(pc),d4				; get first entry of SetupVDP
 		ori.w	#$8100,d4				; make it a valid command word ($8134)
 		move.w	d4,(v_vdp_buffer1).w			; save to buffer for later use
 		move.w	#$8A00+(224-1),(v_hbla_hreg).w		; horizontal interrupt every 224th scanline
 
-	;.load_dac_driver:			
+	;.load_dac_driver:
 		movem.w	d1/d2/d4,-(sp)
 		move.l	a3,-(sp)
-		
+
 		lea	(Kos_Z80).l,a0				; compressed DAC driver address
 		lea	(z80_ram).l,a1				; load into start of z80 RAM
-	
+
 		bsr.w	KosDec					; decompress the DAC driver
-		
+
 		move.l	(sp)+,a3
 		movem.w	(sp)+,d1/d2/d4				; restore registers
-		
+
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
 
 		move.b	d2,z80_port_1_control+1-z80_bus_request(a3) ; initialise port 1
@@ -151,7 +151,7 @@ SetupValues:
 		dc.w	$100					; VDP Reg increment value & opposite initialisation flag for Z80
 		dc.w	$8004					; $8004; normal color mode, horizontal interrupts disabled
    SetupVDP:
-		dc.b	$8134&$FF				; $8134; mode 5, NTSC, vertical interrupts and DMA enabled 
+		dc.b	$8134&$FF				; $8134; mode 5, NTSC, vertical interrupts and DMA enabled
 		dc.b	($8200+(vram_fg>>10))&$FF		; $8230; foreground nametable starts at $C000
 		dc.b	($8300+($A000>>10))&$FF			; $8328; window nametable starts at $A000
 		dc.b	($8400+(vram_bg>>13))&$FF		; $8407; background nametable starts at $E000
@@ -175,7 +175,7 @@ SetupValues:
 		dc.b	$9780&$FF				; VDP $9780 - DMA fill VRAM
 
 		dc.b	$40					; I/O port initialization value
-   
+
    SetupVDP_end:
 
 		dc.l	$40000080				; DMA fill VRAM
@@ -185,6 +185,6 @@ SetupValues:
 		dc.w	$8F00+2					; VDP increment
 		dc.l	$40000010				; VSRAM write mode
 		dc.l 	$C0000000				; CRAM write mode
-   
-   
-		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4) 
+
+
+		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4)

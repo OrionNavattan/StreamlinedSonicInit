@@ -19,7 +19,7 @@ EntryPoint:
 		moveq	#0,d4						; DMA fill/memory clear/Z80 stop bit test value
 		movea.l d4,a4						; clear a4
 		move.l	a4,usp						; clear user stack pointer
-		
+
 		tst.w	HW_Expansion_Control-1-Z80_bus_request(a3)	; was this a soft reset?
 		bne.s	.wait_dma					; if so, skip setting region and the TMSS check
 
@@ -28,26 +28,26 @@ EntryPoint:
 		andi.b	#$F,d3						; get only hardware version ID
 		beq.s	.wait_dma					; if Model 1 VA4 or earlier (ID = 0), branch
 		move.l	#'SEGA',Security_addr-Z80_bus_request(a3)	; satisfy the TMSS
-		
+
 .wait_dma:
 		move.w	(a6),ccr					; copy status register to CCR, clearing the VDP write latch and setting the overflow flag if a DMA is in progress
 		bvs.s	.wait_dma					; if a DMA was in progress during a soft reset, wait until it is finished
-	   
+
 .loop_vdp:
 		move.w	d2,(a6)						; set VDP register
 		add.w	d1,d2						; advance register ID
 		move.b	(a0)+,d2					; load next register value
 		dbf	d5,.loop_vdp					; repeat for all registers ; final value loaded will be used later to initialize I/0 ports
-	   
+
 		move.l	(a0)+,(a6)					; set DMA fill destination
 		move.w	d4,(a5)						; set DMA fill value (0000), clearing the VRAM
-			
+
 		tst.w	HW_Expansion_Control-1-Z80_bus_request(a3)	; was this a soft reset?
 		bne.s	.clear_every_reset				; if so, skip clearing RAM addresses $FE00-$FFFF
-	   
+
 		movea.l	(a0),a4						; System_stack	  (increment will happen later)
 		move.w	4(a0),d5					; repeat times
-		
+
 .loop_ram1:
 		move.l	d4,(a4)+
 		dbf	d5,.loop_ram1					; clear RAM ($FE00-$FFFF)
@@ -55,7 +55,7 @@ EntryPoint:
 .clear_every_reset:
 		addq	#6,a0						; advance to next position in setup array
 		move.w	(a0)+,d5					; repeat times
-		
+
 .loop_ram2:
 		move.l	d4,(a2)+					; a2 = start of 68K RAM
 		dbf	d5,.loop_ram2					; clear RAM ($0000-$FDFF)
@@ -67,14 +67,14 @@ EntryPoint:
 
 		move.l	(a0)+,(a6)					; set VDP to VSRAM write
 		moveq	#$14-1,d5					; set repeat times
-		
+
 .loop_vsram:
 		move.l	d4,(a5)						; clear 4 bytes of VSRAM
 		dbf	d5,.loop_vsram					; repeat until entire VSRAM has been cleared
 
 		move.l	(a0)+,(a6)					; set VDP to CRAM write
 		moveq	#$20-1,d5					; set repeat times
-		
+
 .loop_cram:
 		move.l	d4,(a5)						; clear two palette entries
 		dbf	d5,.loop_cram					; repeat until entire CRAM has been cleared
@@ -84,13 +84,13 @@ EntryPoint:
 		bne.s	.waitz80					; if not, branch
 
 		move.w	#$2000-1,d5					; size of Z80 ram - 1
-		
+
 .clear_Z80_RAM:
 		move.b 	d4,(a1)+					; clear the Z80 RAM
 		dbf	d5,.clear_Z80_RAM
-		
+
 		moveq	#4-1,d5						; set number of PSG channels to mute
-		
+
 .psg_loop:
 		move.b	(a0)+,PSG_input-VDP_data_port(a5)		; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop					; repeat for all channels
@@ -100,14 +100,14 @@ EntryPoint:
 
 		andi.b	 #$C0,d6					; get region and speed settings
 		move.b	 d6,(Graphics_flags).w				; set in RAM
-		
+
 .set_vdp_buffer:
 		move.w	d4,d5						; clear d5
 		move.b	SetupVDP(pc),d5					; get first entry of SetupVDP
 		ori.w	#$8100,d5					; make it a valid command word ($8134)
 		move.w	d5,(VDP_reg_1_command).w			; save to buffer for later use
 		move.w	#$8A00+(224-1),(H_int_counter_command).w	; horizontal interrupt every 224th scanline
-		
+
 ;.load_sound_driver:
 		movem.w	d1/d2/d4,-(sp)					; back up these registers
 		move.l	a3,-(sp)
@@ -116,14 +116,14 @@ EntryPoint:
 		lea	(Z80_SoundDriver).l,a0				; Load Z80 SMPS sound driver
 		lea	(Z80_RAM).l,a1
 		bsr.w	Kos_Decomp
-		
+
 		lea	(Z80_SoundDriverData).l,a0			; Load sound driver data (PSG envelopes, music/sound pointers, FM voice bank)
 		lea	(Z80_RAM+$1300).l,a1
 		bsr.w	Kos_Decomp
 
 		btst	#6,(Graphics_flags).w				; are we on a PAL console?
 		sne	zPalFlag(a1)					; if so, set the driver's PAL flag
-		
+
 		; (Sonic 3)
 		;lea	(Z80_SoundDriver).l,a0				; Load Z80 SMPS sound driver
 		;lea	(Z80_RAM).l,a1
@@ -135,19 +135,19 @@ EntryPoint:
 
 		;btst	#6,(Graphics_flags).w				; are we on a PAL console?
 		;sne	$1C02(a1)					; if so, set the driver's PAL flag
-		
+
 		move.l	(sp)+,a3
 		movem.w (sp)+,d1/d2/d4					; restore registers
 
 		move.w	d4,Z80_reset-Z80_bus_request(a3)		; reset Z80 (d7 = 0 after returning from Saxman decompressor)
-		
+
 		move.b	d2,HW_Port_1_Control-Z80_bus_request(a3)	; initialise port 1
 		move.b	d2,HW_Port_2_Control-Z80_bus_request(a3)	; initialise port 2
 		move.b	d2,HW_Expansion_Control-Z80_bus_request(a3)	; initialise port e
 
 		move.w	d1,Z80_reset-Z80_bus_request(a3)		; release Z80 reset
 		move.w	d4,(a3)						; start the Z80
-		
+
 		move.w	#$4EF9,d0					; machine code for jmp
 		move.w	d0,(V_int_jump).w
 		move.l	#VInt,(V_int_addr).w
@@ -160,13 +160,13 @@ EntryPoint:
 		else
 		bra.s	Test_LockOn
 		endif
-		
+
 		; (Sonic 3)
 		;bsr.w	DetectPAL
 		;jsr	(SRAM_Load).l
 		;move.b	#0,(Game_mode).w
 		;bra.s	Test_CountryCode
-; ---------------------------------------------------------------------------		
+; ---------------------------------------------------------------------------
 SetupValues:
 		dc.w	$2700						; disable interrupts
 		dc.l	Z80_RAM
@@ -178,7 +178,7 @@ SetupValues:
 		dc.w	$100						; VDP Reg increment value & opposite initialisation flag for Z80
 		dc.w	$8004						; $8004; normal color mode, horizontal interrupts disabled
 SetupVDP:
-		dc.b	$8134&$FF					; $8134; mode 5, NTSC, vertical interrupts and DMA enabled 
+		dc.b	$8134&$FF					; $8134; mode 5, NTSC, vertical interrupts and DMA enabled
 		dc.b	($8200+($C000>>10))&$FF				; $8230; foreground nametable starts at $C000
 		dc.b	($8300+($8000>>10))&$FF				; $833C; window nametable starts at $8000
 		dc.b	($8400+($E000>>13))&$FF				; $8407; background nametable starts at $E000
@@ -202,7 +202,7 @@ SetupVDP:
 		dc.b	$9780&$FF					; VDP $9780 - DMA fill VRAM
 
 		dc.b	$40						; I/O port initialization value
-	   
+
 SetupVDP_end:
 
 		dc.l	vdpComm($0000,VRAM,DMA)				; DMA fill VRAM
@@ -213,5 +213,5 @@ SetupVDP_end:
 		dc.l	vdpComm($0000,VSRAM,WRITE)			; VSRAM write mode
 		dc.l 	vdpComm($0000,CRAM,WRITE)			; CRAM write mode
 
-		dc.b	$9F,$BF,$DF,$FF					; PSG mute values (PSG 1 to 4) 
+		dc.b	$9F,$BF,$DF,$FF					; PSG mute values (PSG 1 to 4)
 		even
