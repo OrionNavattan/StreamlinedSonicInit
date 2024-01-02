@@ -25,11 +25,11 @@ EntryPoint:
 		beq.s	.wait_dma				; if Model 1 VA4 or earlier (ID = 0), branch
 		move.l	#'SEGA',tmss_sega-z80_bus_request(a3)	; satisfy the TMSS
 
-   .wait_dma:
+.wait_dma:
 		move.w	(a6),ccr				; copy status register to CCR, clearing the VDP write latch and setting the overflow flag if a DMA is in progress
 		bvs.s	.wait_dma				; if a DMA was in progress during a soft reset, wait until it is finished
 
-   .loop_vdp:
+.loop_vdp:
 		move.w	d2,(a6)					; set VDP register
 		add.w	d1,d2					; advance register ID
 		move.b	(a0)+,d2				; load next register value
@@ -43,14 +43,16 @@ EntryPoint:
 
 		movea.l	(a0),a4					; $FFFFFE00	  (increment will happen later)
 		move.w	4(a0),d5				; repeat times
-   .loop_ram1:
+
+.loop_ram1:
 		move.l	d4,(a4)+
 		dbf	d5,.loop_ram1				; clear RAM ($FE00-$FFFF)
 
-   .clear_every_reset:
+.clear_every_reset:
 		addq	#6,a0					; advance to next position in setup array
 		move.w	(a0)+,d5				; repeat times
-   .loop_ram2:
+
+.loop_ram2:
 		move.l	d4,(a2)+				; a2 = start of 68K RAM
 		dbf	d5,.loop_ram2				; clear RAM ($0000-$FDFF)
 
@@ -61,27 +63,31 @@ EntryPoint:
 
 		move.l	(a0)+,(a6)				; set VDP to VSRAM write
 		moveq	#(sizeof_vsram/4)-1,d5			; set repeat times
-   .loop_vsram:
+
+.loop_vsram:
 		move.l	d4,(a5)					; clear 4 bytes of VSRAM
 		dbf	d5,.loop_vsram				; repeat until entire VSRAM has been cleared
 
 		move.l	(a0)+,(a6)				; set VDP to CRAM write
 		moveq	#(sizeof_pal_all/4)-1,d5		; set repeat times
-   .loop_cram:
+
+.loop_cram:
 		move.l	d4,(a5)					; clear two palette entries
 		dbf	d5,.loop_cram				; repeat until entire CRAM has been cleared
 
-   .waitz80:
+.waitz80:
 		btst	d4,(a3)					; has the Z80 stopped?
 		bne.s	.waitz80				; if not, branch
 
-		move.w #sizeof_z80_ram-1,d5			; size of Z80 ram
-   .clear_Z80_ram:
+		move.w #sizeof_z80_ram-1,d5			; size of Z80 RAM - 1
+
+.clear_Z80_ram:
 		move.b 	d4,(a1)+				; clear the Z80 RAM
 		dbf	d5,.clear_Z80_ram
 
 		moveq	#4-1,d5					; set number of PSG channels to mute
-   .psg_loop:
+
+.psg_loop:
 		move.b	(a0)+,psg_input-vdp_data_port(a5)	; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop				; repeat for all channels
 
@@ -95,7 +101,7 @@ EntryPoint:
 		lea	EndOfHeader(pc),a1			; start checking bytes after the header	($200)
 		move.l	ROMEndLoc(pc),d0			; stop at end of ROM
 
-   .checksum_loop:
+.checksum_loop:
 		add.w	(a1)+,d7				; add each word of the rom to d7
 		cmp.l	a1,d0					; have we reached the end?
 		bcc.s	.checksum_loop				; if not, branch
@@ -106,26 +112,27 @@ EntryPoint:
 		move.w	#cRed,(a5)				; if they don't match, set BG color to red
 		bra.s	*					; stay here forever
 
-	.set_region:
+.set_region:
 		andi.b	 #console_region+console_speed,d6	; get region and speed settings
 		move.b	 d6,(v_console_region).w		; set in RAM
 
-	.set_vdp_buffer:
+.set_vdp_buffer:
 		move.w	d4,d5					; clear d5
 		move.b	SetupVDP(pc),d5				; get first entry of SetupVDP
 		ori.w	#vdp_mode_register2,d5			; make it a valid command word ($8134)
 		move.w	d5,(v_vdp_mode_buffer).w		; save to buffer for later use
 		move.w	#vdp_hint_counter+(screen_height-1),(v_vdp_hint_counter).w ; horizontal interrupt every 224th scanline
 
-	;.load_sound_driver:
-		; WARNING: if using Flamewing's Saxman decompressor, change d7, a5, and a6 in this
-		; block to d6, a0, and a1 respectively, and delete 'movea.l a5,a4'.
+;.load_sound_driver:
+		; WARNING: if you're using Flamewing's Saxman decompressor,
+		; change d7, a5, and a6 in this block to d6, a0,
+		; and a1 respectively, and delete 'movea.l a5,a4'.
 		pushr.w	d1/d2/d4				; back up these registers for compatibility with other decompressors
 ;		pushr.l	a3			; back a3 up too if using a different compression format
 		lea (SoundDriver).l,a6				; sound driver start address
 
 		; WARNING: you must edit MergeCode if you rename this label
-	movewZ80CompSize:
+movewZ80CompSize:
 		move.w	#$F64,d7				; size of compressed data; patched if necessary by SndDriverCompress.exe
 		move.l	d4,d3						; d3 & d4 = buffers for unprocessed data
 		move.l	d4,d5						; d5 = offset of end of decompressed data
@@ -164,7 +171,7 @@ SetupValues:
 
 		dc.w	vdp_mode_register2-vdp_mode_register1	; VDP Reg increment value & opposite initialisation flag for Z80
 		dc.w	vdp_md_color				; $8004; normal color mode, horizontal interrupts disabled
-	SetupVDP:
+SetupVDP:
 		dc.b	(vdp_enable_vint|vdp_enable_dma|vdp_ntsc_display|vdp_md_display)&$FF ;  $8134; mode 5, NTSC, vertical interrupts and DMA enabled
 		dc.b	(vdp_fg_nametable+(vram_fg>>10))&$FF	; $8230; foreground nametable starts at $C000
 		dc.b	(vdp_window_nametable+(vram_window>>10))&$FF ; $8328; window nametable starts at $A000

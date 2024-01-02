@@ -24,11 +24,11 @@ EntryPoint:
 		beq.s	.wait_dma				; if Model 1 VA4 or earlier (ID = 0), branch
 		move.l	#'SEGA',security_addr-z80_bus_request(a3) ; satisfy the TMSS
 
-   .wait_dma:
+.wait_dma:
 		move.w	(a6),ccr				; copy status register to CCR, clearing the VDP write latch and setting the overflow flag if a DMA is in progress
 		bvs.s	.wait_dma				; if a DMA was in progress during a soft reset, wait until it is finished
 
-   .loop_vdp:
+.loop_vdp:
 		move.w	d2,(a6)					; set VDP register
 		add.w	d1,d2					; advance register ID
 		move.b	(a0)+,d2				; load next register value
@@ -42,14 +42,16 @@ EntryPoint:
 
 		movea.l	(a0),a4					; $FFFFFE00	  (increment will happen later)
 		move.w	4(a0),d5				; repeat times
-   .loop_ram1:
+
+.loop_ram1:
 		move.l	d4,(a4)+
 		dbf	d5,.loop_ram1				; clear RAM ($FE00-$FFFF)
 
-   .clear_every_reset:
+.clear_every_reset:
 		addq	#6,a0					; advance to next position in setup array
 		move.w	(a0)+,d5				; repeat times
-   .loop_ram2:
+
+.loop_ram2:
 		move.l	d4,(a2)+				; a2 = start of 68K RAM
 		dbf	d5,.loop_ram2				; clear RAM ($0000-$FDFF)
 
@@ -60,27 +62,30 @@ EntryPoint:
 
 		move.l	(a0)+,(a6)				; set VDP to VSRAM write
 		moveq	#$13,d5					; set repeat times
-   .loop_vsram:
+
+.loop_vsram:
 		move.l	d4,(a5)					; clear 4 bytes of VSRAM
 		dbf	d5,.loop_vsram				; repeat until entire VSRAM has been cleared
 
 		move.l	(a0)+,(a6)				; set VDP to CRAM write
 		moveq	#$1F,d5					; set repeat times
-   .loop_cram:
+.loop_cram:
 		move.l	d4,(a5)					; clear two palette entries
 		dbf	d5,.loop_cram				; repeat until entire CRAM has been cleared
 
-   .waitz80:
+.waitz80:
 		btst	d4,(a3)					; has the Z80 stopped?
 		bne.s	.waitz80				; if not, branch
 
-		move.w	#$2000-1,d5				; size of Z80 ram
-   .clear_Z80_ram:
+		move.w	#$2000-1,d5				; size of Z80 RAM
+
+.clear_Z80_ram:
 		move.b	d4,(a1)+				; clear the Z80 RAM
 		dbf	d5,.clear_Z80_ram
 
 		moveq	#4-1,d5					; set number of PSG channels to mute
-   .psg_loop:
+
+.psg_loop:
 		move.b	(a0)+,psg_input-vdp_data_port(a5)	; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop				; repeat for all channels
 
@@ -94,7 +99,7 @@ EntryPoint:
 		lea	EndOfHeader(pc),a1			; start	checking bytes after the header	($200)
 		move.l	RomEndLoc(pc),d0			; stop at end of ROM
 
-   .checksum_loop:
+.checksum_loop:
 		add.w	(a1)+,d7				; add each word of the rom to d4
 		cmp.l	a1,d0					; have we reached the end?
 		bcc.s	.checksum_loop				; if not, branch
@@ -105,22 +110,23 @@ EntryPoint:
 		move.w	#cRed,(a5)				; set BG color to red
 		bra.s	*					; stay here forever
 
-	.set_region:
+.set_region:
 		andi.b	#$C0,d6					; get region and speed settings
 		move.b	d6,(v_megadrive).w			; set in RAM
 
-	.set_vdp_buffer:
+.set_vdp_buffer:
 		move.w	d4,d5					; clear d5
 		move.b	SetupVDP(pc),d4				; get first entry of SetupVDP
 		ori.w	#$8100,d4				; make it a valid command word ($8134)
 		move.w	d4,(v_vdp_buffer1).w			; save to buffer for later use
 		move.w	#$8A00+(224-1),(v_hbla_hreg).w		; horizontal interrupt every 224th scanline
 
-	;.load_dac_driver:
+;.load_dac_driver:
 		movem.w	d1/d2/d4,-(sp)
 		move.l	a3,-(sp)
 
-		lea	(Kos_Z80).l,a0				; compressed DAC driver address
+		; before commit ea75d0f, the label was Kos_Z80
+		lea	(DACDriver).l,a0			; compressed DAC driver address
 		lea	(z80_ram).l,a1				; load into start of z80 RAM
 
 		bsr.w	KosDec					; decompress the DAC driver
@@ -150,7 +156,7 @@ SetupValues:
 
 		dc.w	$100					; VDP Reg increment value & opposite initialisation flag for Z80
 		dc.w	$8004					; $8004; normal color mode, horizontal interrupts disabled
-   SetupVDP:
+SetupVDP:
 		dc.b	$8134&$FF				; $8134; mode 5, NTSC, vertical interrupts and DMA enabled
 		dc.b	($8200+(vram_fg>>10))&$FF		; $8230; foreground nametable starts at $C000
 		dc.b	($8300+($A000>>10))&$FF			; $8328; window nametable starts at $A000
@@ -176,8 +182,7 @@ SetupValues:
 
 		dc.b	$40					; I/O port initialization value
 
-   SetupVDP_end:
-
+SetupVDP_end:
 		dc.l	$40000080				; DMA fill VRAM
 		dc.l	$FFFFFE00				; start of RAM only cleared on cold boot
 		dc.w	(($FFFFFFFF-$FFFFFE00+1)/4)-1		; loops to clear RAM cleared only on cold boot

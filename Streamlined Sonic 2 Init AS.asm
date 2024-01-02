@@ -43,6 +43,7 @@ EntryPoint:
 
 	movea.l	(a0),a4						; $FFFFFE00	  (increment will happen later)
 	move.w	4(a0),d5					; repeat times
+
 .loop_ram1:
 	move.l	d4,(a4)+
 	dbf	d5,.loop_ram1					; clear RAM ($FE00-$FFFF)
@@ -50,6 +51,7 @@ EntryPoint:
 .clear_every_reset:
 	addq	#6,a0						; advance to next position in setup array
 	move.w	(a0)+,d5					; repeat times
+
 .loop_ram2:
 	move.l	d4,(a2)+					; a2 = start of 68K RAM
 	dbf	d5,.loop_ram2					; clear RAM ($0000-$FDFF)
@@ -61,26 +63,30 @@ EntryPoint:
 
 	move.l	(a0)+,(a6)					; set VDP to VSRAM write
 	moveq	#$14-1,d5					; set repeat times
+
 .loop_vsram:
 	move.l	d4,(a5)						; clear 4 bytes of VSRAM
 	dbf	d5,.loop_vsram					; repeat until entire VSRAM has been cleared
 
 	move.l	(a0)+,(a6)					; set VDP to CRAM write
 	moveq	#$20-1,d5					; set repeat times
+
 .loop_cram:
 	move.l	d4,(a5)						; clear two palette entries
 	dbf	d5,.loop_cram					; repeat until entire CRAM has been cleared
 
-   .waitz80:
+.waitz80:
 	btst	d4,(a3)						; has the Z80 stopped?
 	bne.s	.waitz80					; if not, branch
 
-	move.w	#$2000-1,d5					; size of Z80 ram - 1
+	move.w	#$2000-1,d5					; size of Z80 RAM - 1
+
 .clear_Z80_RAM:
 	move.b 	d4,(a1)+					; clear the Z80 RAM
 	dbf	d5,.clear_Z80_RAM
 
 	moveq	#4-1,d5						; set number of PSG channels to mute
+
 .psg_loop:
 	move.b	(a0)+,PSG_input-VDP_data_port(a5)		; set the PSG channel volume to null (no sound)
 	dbf	d5,.psg_loop					; repeat for all channels
@@ -118,8 +124,9 @@ EntryPoint:
 	move.w	#$8A00+(224-1),(Hint_counter_reserve).w		; horizontal interrupt every 224th scanline
 
 ;.load_sound_driver:
-	; WARNING: if using Flamewing's Saxman decompressor, change d7, a5, and a6 in this
-	; block to d6, a0, and a1 respectively, and delete 'movea.l a5,a4'.
+	; WARNING: if you're using Flamewing's Saxman decompressor,
+	; change d7, a5, and a6 in this block to d6, a0,
+	; and a1 respectively, and delete 'movea.l a5,a4'.
 	movem.w	d1/d2/d4,-(sp)					; back up these registers for compatibility with other decompressors
 ;	move.l	a3,-(sp)					; back a3 up too if using a different compression format
 	lea (Snd_Driver).l,a6					; sound driver start address
@@ -135,7 +142,7 @@ movewZ80CompSize:
 
 	jsr	(SaxDec_Loop).l					; decompress the sound driver (d1, d2, and a3 are not touched by the Saxman decompressor)
 
-;	move.l	(sp)+,a3		; restore a3 if using a different compression format
+;	move.l	(sp)+,a3					; restore a3 if using a different compression format
 	movem.w (sp)+,d1/d2/d4					; restore registers
 
 	btst	#6,(Graphics_Flags).w				; are we on a PAL console?
@@ -191,7 +198,6 @@ SetupVDP:
 	dc.b	$40						; I/O port initialization value
 
 SetupVDP_end:
-
 	dc.l	$40000080					; DMA fill VRAM
 	dc.l	$FFFFFE00					; start of RAM only cleared on cold boot
 	dc.w	(($FFFFFFFF-$FFFFFE00+1)/4)-1			; loops to clear RAM cleared only on cold boot

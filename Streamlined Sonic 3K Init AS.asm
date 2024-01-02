@@ -83,7 +83,7 @@ EntryPoint:
 		btst	d4,(a3)						; has the Z80 stopped?
 		bne.s	.waitz80					; if not, branch
 
-		move.w	#$2000-1,d5					; size of Z80 ram - 1
+		move.w	#$2000-1,d5					; size of Z80 RAM - 1
 
 .clear_Z80_RAM:
 		move.b 	d4,(a1)+					; clear the Z80 RAM
@@ -204,7 +204,6 @@ SetupVDP:
 		dc.b	$40						; I/O port initialization value
 
 SetupVDP_end:
-
 		dc.l	vdpComm($0000,VRAM,DMA)				; DMA fill VRAM
 		dc.l	System_stack					; start of RAM only cleared on cold boot
 		dc.w	(($FFFFFFFF-$FFFFFE00+1)/4)-1			; loops to clear RAM cleared only on cold boot
