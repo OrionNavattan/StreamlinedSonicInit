@@ -1,12 +1,10 @@
 # Streamlined Sonic Init
 Streamlined init code for Sonic the Hedgehog 1, 2, and 3 & Knuckles made by OrionNavattan (under [BSD Zero Clause](LICENSE)).
 
-The code targets SonicRetro's disassemblies, S1 Hivebrain 2022, and Sonic 2 OrnNv.
- 
-These are intended as drop-in replacements for the standard ICDBLK_4 library, and the game-specific init code that immediately follows.
-Compared to the original, these are streamlined, eliminating all redundancy (particularly on cold boot) and in-lining the VDP and joypad init, Z80 code load, and the checksum check (which is easy to remove!)
+The code targets SonicRetro's disassemblies, S1 Hivebrain 2022, and Sonic 2 OrnNv and are intended as drop-in replacements for the standard ICDBLK_4 library along with the game-specific init code that immediately follows.
+Compared to the original, these are streamlined, eliminating all redundancy (particularly on a cold boot), inlining the VDP and joypad init, Z80 code load, and the checksum check (which is easy to remove!)
 
-# Installation Instructions
+# Installation instructions
 
 ## Sonic 1
 
