@@ -23,23 +23,23 @@ EntryPoint:
 		andi.b	#console_revision,d3			; get only hardware version ID
 		beq.s	.wait_dma				; if Model 1 VA4 or earlier (ID = 0), branch
 		move.l	#'SEGA',tmss_sega-z80_bus_request(a3)	; satisfy the TMSS
-   
+
    .wait_dma:
 		move.w	(a6),ccr				; copy status register to CCR, clearing the VDP write latch and setting the overflow flag if a DMA is in progress
 		bvs.s	.wait_dma				; if a DMA was in progress during a soft reset, wait until it is finished
-   
+
    .loop_vdp:
 		move.w	d2,(a6)					; set VDP register
 		add.w	d1,d2					; advance register ID
 		move.b	(a0)+,d2				; load next register value
 		dbf	d5,.loop_vdp				; repeat for all registers; final value loaded will be used later to initialize I/0 ports
-   
+
 		move.l	(a0)+,(a6)				; set DMA fill destination
 		move.w	d4,(a5)					; set DMA fill value (0000), clearing the VRAM
-			
+
 		tst.w	port_e_control_hi-z80_bus_request(a3)	; was this a soft reset?
 		bne.s	.clear_every_reset			; if so, skip clearing RAM addresses $FE00-$FFFF
-   
+
 		movea.l	(a0),a4					; $FFFFFE00	  (increment will happen later)
 		move.w	4(a0),d5				; repeat times
    .loop_ram1:
@@ -78,10 +78,10 @@ EntryPoint:
    .clear_Z80_ram:
 		move.b 	d4,(a1)+				; clear the Z80 RAM
 		dbf	d5,.clear_Z80_ram
-		
+
 		moveq	#4-1,d5					; set number of PSG channels to mute
    .psg_loop:
-		move.b	(a0)+,psg_input-vdp_data_port(a6)	; set the PSG channel volume to null (no sound)
+		move.b	(a0)+,psg_input-vdp_data_port(a5)	; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop				; repeat for all channels
 
 		tst.w	port_e_control_hi-z80_bus_request(a3)	; was this a soft reset?
@@ -100,7 +100,7 @@ EntryPoint:
 		bcc.s	.checksum_loop				; if not, branch
 
 		cmp.w	Checksum(pc),d7				; read checksum
-		
+
 		beq.s	.set_region				; if they match, branch
 		move.w	#cRed,(a5)				; if they don't match, set BG color to red
 		bra.s	*					; stay here forever
@@ -108,7 +108,7 @@ EntryPoint:
 	.set_region:
 		andi.b	 #console_region+console_speed,d6	; get region and speed settings
 		move.b	 d6,(v_console_region).w		; set in RAM
-		
+
 	.set_vdp_buffer:
 		move.w	d4,d5					; clear d5
 		move.b	SetupVDP(pc),d5				; get first entry of SetupVDP
@@ -116,24 +116,24 @@ EntryPoint:
 		move.w	d5,(v_vdp_mode_buffer).w		; save to buffer for later use
 		move.w	#vdp_hint_counter+(screen_height-1),(v_vdp_hint_counter).w ; horizontal interrupt every 224th scanline
 
-	;.load_dac_driver:		
+	;.load_dac_driver:
 		pushr.w d1/d2/d4				; back up these registers to ensure compatibility with other decompressors
 		pushr.l	a3
-		
+
 		lea	(DACDriver).l,a0			; compressed DAC driver address
 		lea	(z80_ram).l,a1				; load into start of z80 RAM
-		
+
 		bsr.w	KosDec					; decompress the DAC driver
-		
+
 		popr.l	a3
 		popr.w	d1/d2/d4				; restore registers
-		
+
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
-		
+
 		move.b	d2,port_1_control-z80_bus_request(a3)	; initialise port 1
 		move.b	d2,port_2_control-z80_bus_request(a3)	; initialise port 2
 		move.b	d2,port_e_control-z80_bus_request(a3)	; initialise port e
-		
+
 		move.w	d1,z80_reset-z80_bus_request(a3)	; release Z80 reset
 		move.w	d4,(a3)					; start the Z80
 
@@ -151,7 +151,7 @@ SetupValues:
 		dc.w	vdp_mode_register2-vdp_mode_register1	; VDP Reg increment value & opposite initialisation flag for Z80
 		dc.w	vdp_md_color				; $8004; normal color mode, horizontal interrupts disabled
 	SetupVDP:
-		dc.b	(vdp_enable_vint|vdp_enable_dma|vdp_ntsc_display|vdp_md_display)&$FF ;  $8134; mode 5, NTSC, vertical interrupts and DMA enabled 
+		dc.b	(vdp_enable_vint|vdp_enable_dma|vdp_ntsc_display|vdp_md_display)&$FF ;  $8134; mode 5, NTSC, vertical interrupts and DMA enabled
 		dc.b	(vdp_fg_nametable+(vram_fg>>10))&$FF	; $8230; foreground nametable starts at $C000
 		dc.b	(vdp_window_nametable+(vram_window>>10))&$FF ; $8328; window nametable starts at $A000
 		dc.b	(vdp_bg_nametable+(vram_bg>>13))&$FF	; $8407; background nametable starts at $E000
@@ -170,12 +170,14 @@ SetupValues:
 		dc.b	vdp_window_x_pos&$FF			; $9100; unused (window horizontal position)
 		dc.b	vdp_window_y_pos&$FF			; $9200; unused (window vertical position)
 
-		dc.w	sizeof_vram-1				; $93FF/$94FF - DMA length
-		dc.w	0					; VDP $9500/9600 - DMA source
+		dc.b	(vdp_dma_length_low+((sizeof_vram-1)&$FF))&$FF	; $93FF/$94FF - DMA length
+		dc.b	(vdp_dma_length_hi+((sizeof_vram-1)>>8))&$FF
+		dc.b	(vdp_dma_source_low+0)&$FF		; $9500/9600 - DMA source
+		dc.b	(vdp_dma_source_mid+0)&$FF
 		dc.b	vdp_dma_vram_fill&$FF			; VDP $9780 - DMA fill VRAM
 
 		dc.b	$40					; I/O port initialization value
-   
+
 	SetupVDP_end:
 
 		dc.l	$40000080				; DMA fill VRAM
@@ -185,6 +187,6 @@ SetupValues:
 		dc.w	vdp_auto_inc+2				; VDP increment
 		dc.l	$40000010				; VSRAM write mode
 		dc.l	$C0000000				; CRAM write mode
-   
 
-		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4) 
+
+		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4)
