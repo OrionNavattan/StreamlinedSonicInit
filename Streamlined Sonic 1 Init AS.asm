@@ -120,7 +120,8 @@ EntryPoint:
 		movem.w	d1/d2/d4,-(sp)
 		move.l	a3,-(sp)
 
-		lea	(Kos_Z80).l,a0				; compressed DAC driver address
+		; before commit ea75d0f, the label was Kos_Z80
+		lea	(DACDriver).l,a0			; compressed DAC driver address
 		lea	(z80_ram).l,a1				; load into start of z80 RAM
 
 		bsr.w	KosDec					; decompress the DAC driver
