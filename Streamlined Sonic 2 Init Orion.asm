@@ -11,7 +11,7 @@ EntryPoint:
 		move.w	(a0)+,sr				; disable interrupts during setup; they will be reenabled by the Sega Screen
 		movem.l (a0)+,a1-a3/a5/a6			; Z80 RAM start, work RAM start, Z80 bus request register, VDP data port, VDP control port
 		movem.w (a0)+,d1/d2				; VDP register increment/value for Z80 stop and reset release ($100),  first VDP register value ($8004)
-		moveq	#sizeof_SetupVDP-1,d5		; VDP registers loop counter
+		moveq	#sizeof_SetupVDP-1,d5			; VDP registers loop counter
 		moveq	#0,d4					; DMA fill/memory clear/Z80 stop bit test value
 		movea.l d4,a4					; clear a4
 		move.l	a4,usp					; clear user stack pointer
@@ -121,21 +121,21 @@ EntryPoint:
 		; WARNING: if using Flamewing's Saxman decompressor, change d7, a5, and a6 in this
 		; block to d6, a0, and a1 respectively, and delete 'movea.l a5,a4'.
 		pushr.w	d1/d2/d4				; back up these registers for compatibility with other decompressors
-;		pushr.l	a3			; back a3 up too if using a different compression format
+;		pushr.l	a3					; back a3 up too if using a different compression format
 		lea (SoundDriver).l,a6				; sound driver start address
 
 		; WARNING: you must edit MergeCode if you rename this label
 	movewZ80CompSize:
 		move.w	#$F64,d7				; size of compressed data; patched if necessary by SndDriverCompress.exe
-		move.l	d4,d3						; d3 & d4 = buffers for unprocessed data
-		move.l	d4,d5						; d5 = offset of end of decompressed data
-		move.l	d4,d6						; make the decompressor fetch the first descriptor byte
+		move.l	d4,d3					; d3 & d4 = buffers for unprocessed data
+		move.l	d4,d5					; d5 = offset of end of decompressed data
+		move.l	d4,d6					; make the decompressor fetch the first descriptor byte
 		lea	(z80_ram).l,a5				; start of compressed data
 		movea.l a5,a4					; start of compressed data (used for dictionary matches)
 
 		jsr	(SaxDec).l				; decompress the sound driver (uses d0,d3-d7,a4-a6; d1,d2,a0-a3 are not touched)
 
-;		popr.l	a3		; restore a3 if using a different compression format
+;		popr.l	a3					; restore a3 if using a different compression format
 		popr.w d1/d2/d4					; restore registers
 
 		btst	#console_speed_bit,(v_console_region).w	; are we on a PAL console?

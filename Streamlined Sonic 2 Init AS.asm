@@ -88,7 +88,8 @@ EntryPoint:
 	tst.w	HW_Expansion_Control-1-Z80_Bus_Request(a3)	; was this a soft reset?
 	bne.w	.set_vdp_buffer					; if so, skip the checksum check and setting the region variable
 
-	; Checksum check; delete everything from here to .set_region to remove
+    if skipChecksumCheck=0
+	; Checksum check
 	; All absolute longs here have been optimized to PC relative, since this code will
 	; invariably be located near the header.
    	move.l	d4,d7						; clear d7
@@ -105,6 +106,7 @@ EntryPoint:
 	beq.s	.set_region					; if they match, branch
 	move.w	#$E,(a5)					; if they don't match, set BG color to red
 	bra.s	*						; stay here forever
+    endif
 
 .set_region:
 	andi.b	 #$C0,d6					; get region and speed settings
@@ -124,7 +126,7 @@ EntryPoint:
 ;	move.l	a3,-(sp)					; back a3 up too if using a different compression format
 	lea (Snd_Driver).l,a6					; sound driver start address
 
-	; WARNING: you must edit the source of FixPointer if you rename this label
+	; WARNING: the build script will have to be edited if this label is changed!
 movewZ80CompSize:
 	move.w	#$F64,d7					; size of compressed driver
 	move.l	d4,d3						; clear d3/d5/d6
@@ -135,7 +137,7 @@ movewZ80CompSize:
 
 	jsr	(SaxDec_Loop).l					; decompress the sound driver (d1, d2, and a3 are not touched by the Saxman decompressor)
 
-;	move.l	(sp)+,a3		; restore a3 if using a different compression format
+;	move.l	(sp)+,a3					; restore a3 if using a different compression format
 	movem.w (sp)+,d1/d2/d4					; restore registers
 
 	btst	#6,(Graphics_Flags).w				; are we on a PAL console?
@@ -165,7 +167,7 @@ SetupValues:
 	dc.w	$100						; VDP Reg increment value & opposite initialisation flag for Z80
 	dc.w	$8004						; $8004; normal color mode, horizontal interrupts disabled
 SetupVDP:
-	dc.b	$8134&$FF					;  $8134; mode 5, NTSC, vertical interrupts and DMA enabled
+	dc.b	$8134&$FF					; $8134; mode 5, NTSC, vertical interrupts and DMA enabled
 	dc.b	($8200+(VRAM_Plane_A_Name_Table>>10))&$FF	; $8230; foreground nametable starts at $C000
 	dc.b	($8300+($A000>>10))&$FF				; $8328; window nametable starts at $A000
 	dc.b	($8400+(VRAM_Plane_B_Name_Table>>13))&$FF	; $8407; background nametable starts at $E000
