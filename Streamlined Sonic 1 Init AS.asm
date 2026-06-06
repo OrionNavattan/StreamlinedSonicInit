@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------
 ; Streamlined Startup for Sonic the Hedgehog 1
-; Targets Sonic 1 SonicRetro AS, but can be adapted to
+; Targets Sonic 1 SonicRetro AS (release v26.05), but can be adapted to
 ; other disassemblies and other games.
 ; Includes code from MarkeyJester's init library:
 ; https://pastebin.com/KXpmQxQp
@@ -15,10 +15,10 @@ EntryPoint:
 		movea.l d4,a4					; clear a4
 		move.l	a4,usp					; clear user stack pointer
 
-		tst.w	z80_expansion_control-z80_bus_request(a3) ; was this a soft reset?
+		tst.w	expansion_control_hi-z80_bus_request(a3) ; was this a soft reset?
 		bne.s	.wait_dma				; if so, skip setting region and the TMSS check
 
-		move.b	z80_version-z80_bus_request(a3),d6	; load hardware version
+		move.b	console_version-z80_bus_request(a3),d6	; load hardware version
 		move.b	d6,d3					; copy to d3 for checking revision (d6 will be used later to set region and speed)
 		andi.b	#$F,d3					; get only hardware version ID
 		beq.s	.wait_dma				; if Model 1 VA4 or earlier (ID = 0), branch
@@ -37,7 +37,7 @@ EntryPoint:
 		move.l	(a0)+,(a6)				; set DMA fill destination
 		move.w	d4,(a5)					; set DMA fill value (0000), clearing the VRAM
 
-		tst.w	z80_expansion_control-z80_bus_request(a3) ; was this a soft reset?
+		tst.w	expansion_control_hi-z80_bus_request(a3) ; was this a soft reset?
 		bne.s	.clear_every_reset			; if so, skip clearing RAM addresses $FE00-$FFFF
 
 		movea.l	(a0),a4					; $FFFFFE00	  (increment will happen later)
@@ -84,10 +84,11 @@ EntryPoint:
 		move.b	(a0)+,psg_input-vdp_data_port(a5)	; set the PSG channel volume to null (no sound)
 		dbf	d5,.psg_loop				; repeat for all channels
 
-		tst.w	z80_expansion_control-z80_bus_request(a3) ; was this a soft reset?
+		tst.w	expansion_control_hi-z80_bus_request(a3) ; was this a soft reset?
 		bne.w	.set_vdp_buffer				; if so, skip the checksum check and setting the region variable
 
-   		; Checksum check; delete everything from here to .set_region to remove
+	if SkipChecksumCheck=0
+   		; Checksum check
    		; All absolute longs here have been optimized to PC relative, since this code will
 		; invariably be located near the header.
 		move.l	d4,d7					; clear d7
@@ -104,6 +105,7 @@ EntryPoint:
 		beq.s	.set_region				; if they match, branch
 		move.w	#cRed,(a5)				; set BG color to red
 		bra.s	*					; stay here forever
+	endif
 
 	.set_region:
 		andi.b	#$C0,d6					; get region and speed settings
@@ -114,7 +116,7 @@ EntryPoint:
 		move.b	SetupVDP(pc),d4				; get first entry of SetupVDP
 		ori.w	#$8100,d4				; make it a valid command word ($8134)
 		move.w	d4,(v_vdp_buffer1).w			; save to buffer for later use
-		move.w	#$8A00+(224-1),(v_hbla_hreg).w		; horizontal interrupt every 224th scanline
+		move.w	#$8A00+(224-1),(v_hblank_hreg).w	; horizontal interrupt every 224th scanline
 
 	;.load_dac_driver:
 		movem.w	d1/d2/d4,-(sp)
@@ -131,9 +133,9 @@ EntryPoint:
 
 		move.w	d4,z80_reset-z80_bus_request(a3)	; reset Z80
 
-		move.b	d2,z80_port_1_control+1-z80_bus_request(a3) ; initialise port 1
-		move.b	d2,z80_port_2_control+1-z80_bus_request(a3) ; initialise port 2
-		move.b	d2,z80_expansion_control+1-z80_bus_request(a3) ; initialise port e
+		move.b	d2,port_1_control-z80_bus_request(a3)	; initialise port 1
+		move.b	d2,port_2_control-z80_bus_request(a3)	; initialise port 2
+		move.b	d2,expansion_control-z80_bus_request(a3) ; initialise port e
 
 		move.w	d1,z80_reset-z80_bus_request(a3)	; release Z80 reset
 		move.w	d4,(a3)					; start the Z80
@@ -186,6 +188,5 @@ SetupValues:
 		dc.w	$8F00+2					; VDP increment
 		dc.l	$40000010				; VSRAM write mode
 		dc.l 	$C0000000				; CRAM write mode
-
 
 		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4)

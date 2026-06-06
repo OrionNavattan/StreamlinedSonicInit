@@ -112,7 +112,7 @@ EntryPoint:
 		movem.w	d1/d2/d4,-(sp)					; back up these registers
 		move.l	a3,-(sp)
 
-
+		; (Sonic & Knuckles)
 		lea	(Z80_SoundDriver).l,a0				; Load Z80 SMPS sound driver
 		lea	(Z80_RAM).l,a1
 		bsr.w	Kos_Decomp
@@ -127,14 +127,14 @@ EntryPoint:
 		; (Sonic 3)
 		;lea	(Z80_SoundDriver).l,a0				; Load Z80 SMPS sound driver
 		;lea	(Z80_RAM).l,a1
-		;move.w	#$1C00-2,d0
+		;move.w	#(Size_of_Snd_driver_guess+Size_of_Snd_driver2_guess)-1,d0
 
 ;.loadZ80drv:
 		;move.b	(a0)+,(a1)+					; Load it into Z80 RAM
 		;dbf	d0,.loadZ80drv
 
 		;btst	#6,(Graphics_flags).w				; are we on a PAL console?
-		;sne	$1C02(a1)					; if so, set the driver's PAL flag
+		;sne	zPalFlag(a1)					; if so, set the driver's PAL flag
 
 		move.l	(sp)+,a3
 		movem.w (sp)+,d1/d2/d4					; restore registers
@@ -154,6 +154,7 @@ EntryPoint:
 		move.w	d0,(H_int_jump).w
 		move.l	#HInt,(H_int_addr).w
 
+		; (Sonic & Knuckles)
 		if Sonic3_Complete
 		moveq	#0,d1
 		bra.s	SonicAndKnucklesStartup

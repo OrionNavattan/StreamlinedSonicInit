@@ -138,7 +138,7 @@ EntryPoint:
 		move.w	d4,(a3)					; start the Z80
 
 		move.b	#id_Sega,(v_gamemode).w			; set Game Mode to Sega Screen
-		bra.s	MainGameLoop				; continue to main program
+		bra.w	MainGameLoop				; continue to main program
 
 SetupValues:
 		dc.w	$2700					; disable interrupts
@@ -187,6 +187,5 @@ SetupValues:
 		dc.w	vdp_auto_inc+2				; VDP increment
 		dc.l	$40000010				; VSRAM write mode
 		dc.l	$C0000000				; CRAM write mode
-
 
 		dc.b	$9F,$BF,$DF,$FF				; PSG mute values (PSG 1 to 4)
