@@ -118,11 +118,11 @@ EntryPoint:
 		bsr.w	Kos_Decomp
 
 		lea	(Z80_SoundDriverData).l,a0			; Load sound driver data (PSG envelopes, music/sound pointers, FM voice bank)
-		lea	(Z80_RAM+$1300).l,a1
+		lea	(Z80_RAM+z80_SoundDriverPointers).l,a1
 		bsr.w	Kos_Decomp
 
 		btst	#6,(Graphics_flags).w				; are we on a PAL console?
-		sne	zPalFlag(a1)					; if so, set the driver's PAL flag
+		sne	(Z80_RAM+zPalFlag).l					; if so, set the driver's PAL flag
 
 		; (Sonic 3)
 		;lea	(Z80_SoundDriver).l,a0				; Load Z80 SMPS sound driver
@@ -134,7 +134,7 @@ EntryPoint:
 		;dbf	d0,.loadZ80drv
 
 		;btst	#6,(Graphics_flags).w				; are we on a PAL console?
-		;sne	zPalFlag(a1)					; if so, set the driver's PAL flag
+		;sne	(Z80_RAM+zPalFlag).l					; if so, set the driver's PAL flag
 
 		move.l	(sp)+,a3
 		movem.w (sp)+,d1/d2/d4					; restore registers
